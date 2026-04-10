@@ -1,4 +1,4 @@
-import { copyFile, mkdir, rm, writeFile } from 'node:fs/promises';
+import { access, copyFile, mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { SimulationSpec } from '@/domain/simulation/SimulationSpec';
 import type { Logger } from '@/ports/Logger';
@@ -34,6 +34,13 @@ export default class NodeWorkspacePreparer implements WorkspacePreparerPort{
     ): Promise<PreparedWorkspace>{
         const mainScriptPath = path.resolve(spec.inputScript.path as string);
         const inputFiles = (spec.inputFiles ?? []).map((value) => path.resolve(value));
+
+        await this.ensurePathExists(mainScriptPath, 'Simulation input script');
+
+        for(const inputFilePath of inputFiles){
+            await this.ensurePathExists(inputFilePath, 'Simulation input file');
+        }
+
         const sourceRoot = this.findCommonRoot([ mainScriptPath, ...inputFiles ]);
 
         let mainInputHostPath = '';
@@ -80,6 +87,7 @@ export default class NodeWorkspacePreparer implements WorkspacePreparerPort{
         const filename = spec.inputScript.filename ?? 'in.generated.lmp';
         const mainInputHostPath = path.join(inputDir, filename);
         const content = spec.inputScript.content;
+        const inputFiles = (spec.inputFiles ?? []).map((value) => path.resolve(value));
 
         if(typeof content !== 'string'){
             throw new Error('Simulation inputScript.content is required when inputScript.path is not provided.');
@@ -87,10 +95,17 @@ export default class NodeWorkspacePreparer implements WorkspacePreparerPort{
 
         await writeFile(mainInputHostPath, content, 'utf8');
 
-        for(const filePath of spec.inputFiles ?? []){
-            const inputFiles = (spec.inputFiles ?? []).map((value) => path.resolve(value));
-            const sourceRoot = this.findCommonRoot(inputFiles);
-            const absolutePath = path.resolve(filePath);
+        if(inputFiles.length > 0){
+            for(const inputFilePath of inputFiles){
+                await this.ensurePathExists(inputFilePath, 'Simulation input file');
+            }
+        }
+
+        const sourceRoot = inputFiles.length > 0
+            ? this.findCommonRoot(inputFiles)
+            : process.cwd();
+
+        for(const absolutePath of inputFiles){
             const relativePath = this.resolveRelativeTarget(sourceRoot, absolutePath);
             const targetPath = path.join(inputDir, relativePath);
             
@@ -151,5 +166,16 @@ export default class NodeWorkspacePreparer implements WorkspacePreparerPort{
 
     private toPosixPath(value: string): string{
         return value.split(path.sep).join(path.posix.sep);
+    }
+
+    private async ensurePathExists(targetPath: string, label: string): Promise<void>{
+        try{
+            await access(targetPath);
+        }catch{
+            throw new Error(
+                `${label} was not found: "${targetPath}". ` +
+                `Current working directory: "${process.cwd()}".`
+            );
+        }
     }
 };

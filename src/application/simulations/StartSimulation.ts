@@ -229,7 +229,7 @@ export default class StartSimulation{
         const command: string[] = [];
         
         if(spec.execution.mpiRanks > 1){
-            command.push('mpirun', '-np', String(spec.execution.mpiRanks));
+            command.push('mpirun', '--allow-run-as-root', '-np', String(spec.execution.mpiRanks));
         }
 
         command.push(spec.execution.binary, '-in', mainInputContainerPath);
