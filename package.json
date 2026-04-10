@@ -1,6 +1,11 @@
 {
-  "name": "lammps-sdk",
-  "version": "0.1.0",
+  "name": "lammps-runtime",
+  "version": "1.0.0",
+  "author": {
+    "email": "contact@voltcloud.dev",
+    "name": "VoltLabs Research",
+    "url": "https://github.com/voltlabs-research/lammps-runtime"
+  },
   "description": "TypeScript runtime SDK for building and running LAMMPS simulations in Docker.",
   "type": "module",
   "main": "./dist/index.js",

@@ -24,9 +24,7 @@ const image = await runtime.build({
 
 const run = await runtime.run({
     image: image.tag,
-    inputScript: {
-        path: './examples/in.lmp'
-    },
+    inputFile: './examples/in.lmp',
     outputDir: './runs/run-001',
     execution: { mpiRanks: 4 },
     dumpWatch: {

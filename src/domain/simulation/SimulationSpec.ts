@@ -1,11 +1,5 @@
 import { BuildSpec } from '@/domain/build/BuildSpec';
 
-export interface InputScriptSpec{
-    path?: string;
-    content?: string;
-    filename?: string;
-};
-
 export interface SimulationResources{
     cpus?: number;
     memory?: string;
@@ -34,7 +28,7 @@ export interface CleanupPolicy{
 
 export interface SimulationSpec{
     image: string | BuildSpec;
-    inputScript: InputScriptSpec;
+    inputFile: string;
     inputFiles?: string[];
     variables?: Record<string, string | number | boolean>;
     env?: Record<string, string>;
@@ -48,7 +42,7 @@ export interface SimulationSpec{
 
 export interface ResolvedSimulationSpec{
     image: string | BuildSpec;
-    inputScript: InputScriptSpec;
+    inputFile: string;
     inputFiles: string[];
     variables: Record<string, string | number | boolean>;
     env: Record<string, string>;

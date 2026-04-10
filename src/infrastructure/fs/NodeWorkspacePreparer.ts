@@ -1,4 +1,4 @@
-import { access, copyFile, mkdir, rm, writeFile } from 'node:fs/promises';
+import { access, copyFile, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import type { SimulationSpec } from '@/domain/simulation/SimulationSpec';
 import type { Logger } from '@/ports/Logger';
@@ -15,11 +15,7 @@ export default class NodeWorkspacePreparer implements WorkspacePreparerPort{
         await mkdir(outputDir, { recursive: true });
         await mkdir(inputDir, { recursive: true });
 
-        if(typeof spec.inputScript.path === 'string'){
-            return await this.prepareFromPath(spec, outputDir, workspaceDir, inputDir);
-        }
-
-        return await this.prepareFromContent(spec, outputDir, workspaceDir, inputDir);
+        return await this.prepareFromPath(spec, outputDir, workspaceDir, inputDir);
     }
 
     async cleanup(workspace: PreparedWorkspace): Promise<void>{
@@ -32,7 +28,7 @@ export default class NodeWorkspacePreparer implements WorkspacePreparerPort{
         workspaceDir: string,
         inputDir: string
     ): Promise<PreparedWorkspace>{
-        const mainScriptPath = path.resolve(spec.inputScript.path as string);
+        const mainScriptPath = path.resolve(spec.inputFile);
         const inputFiles = (spec.inputFiles ?? []).map((value) => path.resolve(value));
 
         await this.ensurePathExists(mainScriptPath, 'Simulation input script');
@@ -75,56 +71,6 @@ export default class NodeWorkspacePreparer implements WorkspacePreparerPort{
             mainInputContainerPath: this.toPosixPath(
                 path.join("/workspace/input", path.relative(inputDir, mainInputHostPath)),
             ),
-        };
-    }
-
-    private async prepareFromContent(
-        spec: SimulationSpec,
-        outputDir: string,
-        workspaceDir: string,
-        inputDir: string
-    ): Promise<PreparedWorkspace>{
-        const filename = spec.inputScript.filename ?? 'in.generated.lmp';
-        const mainInputHostPath = path.join(inputDir, filename);
-        const content = spec.inputScript.content;
-        const inputFiles = (spec.inputFiles ?? []).map((value) => path.resolve(value));
-
-        if(typeof content !== 'string'){
-            throw new Error('Simulation inputScript.content is required when inputScript.path is not provided.');
-        }
-
-        await writeFile(mainInputHostPath, content, 'utf8');
-
-        if(inputFiles.length > 0){
-            for(const inputFilePath of inputFiles){
-                await this.ensurePathExists(inputFilePath, 'Simulation input file');
-            }
-        }
-
-        const sourceRoot = inputFiles.length > 0
-            ? this.findCommonRoot(inputFiles)
-            : process.cwd();
-
-        for(const absolutePath of inputFiles){
-            const relativePath = this.resolveRelativeTarget(sourceRoot, absolutePath);
-            const targetPath = path.join(inputDir, relativePath);
-            
-            await mkdir(path.dirname(targetPath), { recursive: true });
-            await copyFile(absolutePath, targetPath);
-        }
-
-        this.logger.info('Prepared simulation workspace from inline content.', {
-            outputDir,
-            workspaceDir,
-            inputDir
-        });
-
-        return {
-            outputDir,
-            workspaceDir,
-            inputDir,
-            mainInputHostPath,
-            mainInputContainerPath: this.toPosixPath(path.join('/workspace/input', filename)),
         };
     }
 

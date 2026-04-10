@@ -36,7 +36,6 @@ export default class StartSimulation{
 
     async execute(spec: SimulationSpec): Promise<RunHandle>{
         const resolvedSpec = this.resolveSpec(spec);
-        this.validateInputScript(resolvedSpec);
         
         const imageTag = (typeof resolvedSpec.image === 'string')
             ? resolvedSpec.image
@@ -137,7 +136,7 @@ export default class StartSimulation{
     private resolveSpec(spec: SimulationSpec): ResolvedSimulationSpec{
         return {
             image: spec.image,
-            inputScript: spec.inputScript,
+            inputFile: spec.inputFile,
             inputFiles: spec.inputFiles ?? [],
             variables: spec.variables ?? {},
             env: spec.env ?? {},
@@ -162,15 +161,6 @@ export default class StartSimulation{
             },
             outputDir: spec.outputDir,
         };
-    }
-
-    private validateInputScript(spec: ResolvedSimulationSpec): void{
-        const hasPath = typeof spec.inputScript.path === 'string';
-        const hasContent = typeof spec.inputScript.content === 'string';
-
-        if(hasPath === hasContent){
-            throw new Error('Simulation inputScript must provide exactly one of "path" or "content".');
-        }
     }
 
     private async handleStdout(run: Run, line: string, interpreter: LammpsOutputInterpreter): Promise<void>{

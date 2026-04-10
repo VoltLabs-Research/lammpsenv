@@ -7,7 +7,6 @@ export type { RunSnapshot } from '@/domain/simulation/RunSnapshopt';
 export type {
     CleanupPolicy,
     DumpWatchSpec,
-    InputScriptSpec,
     ResolvedSimulationSpec,
     SimulationExecution,
     SimulationResources,

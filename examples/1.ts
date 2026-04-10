@@ -19,9 +19,7 @@ const image = await runtime.build({
 
 const run = await runtime.run({
     image: image.tag,
-    inputScript: {
-        path: './in.lmp'
-    },
+    inputFile: './in.lmp',
     outputDir: './runs/run-001',
     variables: {
         temperature: 300,
