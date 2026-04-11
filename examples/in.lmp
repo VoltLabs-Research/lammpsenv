@@ -25,7 +25,7 @@ thermo_style    custom step temp press pe ke etotal
 
 fix             thermostat all nvt temp 1.0 1.0 1.0
 
-dump            traj all custom 100 dump.lammpstrj id type x y z
+dump            traj all custom 100 *.dump id type x y z
 dump_modify     traj sort id flush yes
 
 run             5000
