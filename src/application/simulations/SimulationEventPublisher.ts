@@ -16,14 +16,10 @@ export default class SimulationEventPublisher{
     }
 
     started(run: Run): void{
-        if(!run.containerId){
-            throw new Error(`Run "${run.id}" has no container attached.`);
-        }
-
         this.eventBus.emit('simulation:start', {
             runId: run.id,
             imageTag: run.imageTag,
-            containerId: run.containerId,
+            containerId: run.containerId!,
             outputDir: run.outputDir,
             snapshot: run.snapshot()
         });

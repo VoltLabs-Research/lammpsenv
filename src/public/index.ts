@@ -1,5 +1,7 @@
 export { default as LammpsRuntime } from './LammpsRuntime';
+export type { LammpsRuntimeOptions } from './LammpsRuntime';
 
+export { default as RunHandle } from '@/domain/simulation/RunHandle';
 export type { BuildResult } from '@/domain/build/Build';
 export type { BuildSource, BuildSpec, ResolvedBuildSpec } from '@/domain/build/BuildSpec';
 export type { RuntimeEventMap } from '@/domain/observability/EventMap';

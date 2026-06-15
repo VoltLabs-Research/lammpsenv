@@ -3,6 +3,8 @@ import { watch } from 'chokidar';
 import type { Logger } from '@/ports/Logger';
 import type { FileWatchHandle, FileWatchHandlers, FileWatcher } from '@/ports/FileWatcher';
 
+type ChokidarWatcher = ReturnType<typeof watch>;
+
 export default class ChokidarFileWatcher implements FileWatcher{
     constructor(private readonly logger: Logger){}
 
@@ -19,22 +21,8 @@ export default class ChokidarFileWatcher implements FileWatcher{
             }
         });
 
-        // TODO: fix duplicated code
-        watcher.on('add', (filePath) => {
-            if(!this.matches(filePath, patterns)) return;
-
-            Promise.resolve(handlers.onAdd(filePath)).catch((error) => {
-                Promise.resolve(handlers.onError(error instanceof Error ? error : new Error(String(error))));
-            });
-        });
-
-        watcher.on('change', (filePath) => {
-            if(!this.matches(filePath, patterns)) return;
-
-            Promise.resolve(handlers.onChange(filePath)).catch((error) => {
-                Promise.resolve(handlers.onError(error instanceof Error ? error : new Error(String(error))));
-            });
-        });
+        this.bindFileEvent(watcher, 'add', patterns, handlers, handlers.onAdd);
+        this.bindFileEvent(watcher, 'change', patterns, handlers, handlers.onChange);
 
         watcher.on('error', (error) => {
             this.logger.error('File watcher error.', { error: String(error) });
@@ -44,6 +32,22 @@ export default class ChokidarFileWatcher implements FileWatcher{
         return {
             close: async () => await watcher.close()
         };
+    }
+
+    private bindFileEvent(
+        watcher: ChokidarWatcher,
+        eventName: 'add' | 'change',
+        patterns: string[],
+        handlers: FileWatchHandlers,
+        handle: (filePath: string) => void | Promise<void>
+    ): void{
+        watcher.on(eventName, (filePath) => {
+            if(!this.matches(filePath, patterns)) return;
+
+            Promise.resolve(handle(filePath)).catch((error) => {
+                Promise.resolve(handlers.onError(error instanceof Error ? error : new Error(String(error))));
+            });
+        });
     }
 
     private matches(filePath: string, patterns: string[]): boolean{
